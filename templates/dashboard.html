@@ -5,6 +5,9 @@
 {% block content %}
     <h1>Welcome, {{ current_user.username }}</h1>
 
+    <h2>Storage Usage</h2>
+    <p>Total storage used: {{ (storage_usage / 1024 / 1024) | round(2) }} MB</p>
+
     <h2>Upload New File</h2>
     <form id="upload-form" action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data">
         <div>
@@ -82,7 +85,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            <a href="{{ url_for('download_file', file_id=file.id) }}" class="btn">Download</a>
+                            <a href="{{ file.public_url }}" class="btn" target="_blank">View/Download</a>
                             <form action="{{ url_for('delete_file', file_id=file.id) }}" method="POST" style="display: inline;">
                                 <button type="submit" class="btn delete-button">Delete</button>
                             </form>

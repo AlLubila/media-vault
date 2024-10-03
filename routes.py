@@ -1,11 +1,12 @@
 import os
 from datetime import datetime
-from flask import render_template, redirect, url_for, request, flash, send_from_directory
+from flask import render_template, redirect, url_for, request, flash, send_file
 from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.utils import secure_filename
 from app import app, db, login_manager
 from models import User, MediaFile, Album
 from utils import allowed_file, generate_unique_filename
+from cloud_storage import upload_file, download_file, delete_file, get_storage_usage
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -63,7 +64,8 @@ def logout():
 def dashboard():
     user_files = MediaFile.query.filter_by(user_id=current_user.id).all()
     user_albums = Album.query.filter_by(user_id=current_user.id).all()
-    return render_template('dashboard.html', files=user_files, albums=user_albums)
+    storage_usage = get_storage_usage()
+    return render_template('dashboard.html', files=user_files, albums=user_albums, storage_usage=storage_usage)
 
 @app.route('/upload', methods=['POST'])
 @login_required
@@ -80,7 +82,12 @@ def upload_file():
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         unique_filename = generate_unique_filename(filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
+        temp_path = os.path.join('/tmp', unique_filename)
+        file.save(temp_path)
+        
+        # Upload to Google Cloud Storage
+        public_url = upload_file(temp_path, unique_filename)
+        os.remove(temp_path)  # Remove temporary file
         
         album_id = request.form.get('album_id')
         new_file = MediaFile(
@@ -90,7 +97,8 @@ def upload_file():
             tags=request.form.get('tags', ''),
             upload_date=datetime.utcnow(),
             user_id=current_user.id,
-            album_id=album_id if album_id else None
+            album_id=album_id if album_id else None,
+            public_url=public_url
         )
         db.session.add(new_file)
         db.session.commit()
@@ -109,7 +117,9 @@ def download_file(file_id):
         flash('You do not have permission to download this file')
         return redirect(url_for('dashboard'))
     
-    return send_from_directory(app.config['UPLOAD_FOLDER'], file.filename, as_attachment=True, download_name=file.original_filename)
+    temp_path = os.path.join('/tmp', file.filename)
+    download_file(file.filename, temp_path)
+    return send_file(temp_path, as_attachment=True, download_name=file.original_filename)
 
 @app.route('/search')
 @login_required
@@ -133,7 +143,7 @@ def delete_file(file_id):
         flash('You do not have permission to delete this file')
         return redirect(url_for('dashboard'))
     
-    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
+    delete_file(file.filename)
     db.session.delete(file)
     db.session.commit()
     flash('File successfully deleted')
