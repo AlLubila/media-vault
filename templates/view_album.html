@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}{{ album.name }}{% endblock %}
+
+{% block content %}
+    <h1>{{ album.name }}</h1>
+    <p>{{ album.description }}</p>
+    <p>Created on: {{ album.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+
+    <h2>Files in this Album</h2>
+    {% if album.media_files.count() > 0 %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Filename</th>
+                    <th>Type</th>
+                    <th>Tags</th>
+                    <th>Upload Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for file in album.media_files %}
+                    <tr>
+                        <td>{{ file.original_filename }}</td>
+                        <td>{{ file.file_type }}</td>
+                        <td>{{ file.tags }}</td>
+                        <td>{{ file.upload_date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>
+                            <a href="{{ url_for('download_file', file_id=file.id) }}" class="btn">Download</a>
+                            <form action="{{ url_for('delete_file', file_id=file.id) }}" method="POST" style="display: inline;">
+                                <button type="submit" class="btn delete-button">Delete</button>
+                            </form>
+                            <form action="{{ url_for('move_file', file_id=file.id) }}" method="POST" style="display: inline;">
+                                <select name="album_id">
+                                    <option value="">No Album</option>
+                                    {% for user_album in current_user.albums %}
+                                        <option value="{{ user_album.id }}" {% if file.album_id == user_album.id %}selected{% endif %}>{{ user_album.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn">Move</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No files in this album yet.</p>
+    {% endif %}
+
+    <a href="{{ url_for('dashboard') }}" class="btn">Back to Dashboard</a>
+{% endblock %}

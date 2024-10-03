@@ -17,15 +17,42 @@
             <input type="text" id="tags" name="tags">
         </div>
         <div>
+            <label for="album_id">Album:</label>
+            <select id="album_id" name="album_id">
+                <option value="">No Album</option>
+                {% for album in albums %}
+                    <option value="{{ album.id }}">{{ album.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
             <input type="submit" value="Upload" class="btn">
         </div>
     </form>
 
-    <h2>Search Files</h2>
+    <h2>Search Files and Albums</h2>
     <form id="search-form" action="{{ url_for('search') }}" method="GET" class="search-form">
-        <input type="text" id="search-input" name="query" placeholder="Search by filename or tags" value="{{ search_query or '' }}">
+        <input type="text" id="search-input" name="query" placeholder="Search by filename, tags, or album name" value="{{ search_query or '' }}">
         <input type="submit" value="Search" class="btn">
     </form>
+
+    <h2>Your Albums</h2>
+    <a href="{{ url_for('create_album') }}" class="btn">Create New Album</a>
+    {% if albums %}
+        <ul>
+            {% for album in albums %}
+                <li>
+                    <a href="{{ url_for('view_album', album_id=album.id) }}">{{ album.name }}</a>
+                    ({{ album.media_files.count() }} files)
+                    <form action="{{ url_for('delete_album', album_id=album.id) }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn delete-button">Delete Album</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No albums created yet.</p>
+    {% endif %}
 
     <h2>Your Files</h2>
     {% if files %}
@@ -36,6 +63,7 @@
                     <th>Type</th>
                     <th>Tags</th>
                     <th>Upload Date</th>
+                    <th>Album</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -47,9 +75,25 @@
                         <td>{{ file.tags }}</td>
                         <td>{{ file.upload_date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
                         <td>
+                            {% if file.album %}
+                                {{ file.album.name }}
+                            {% else %}
+                                No Album
+                            {% endif %}
+                        </td>
+                        <td>
                             <a href="{{ url_for('download_file', file_id=file.id) }}" class="btn">Download</a>
                             <form action="{{ url_for('delete_file', file_id=file.id) }}" method="POST" style="display: inline;">
                                 <button type="submit" class="btn delete-button">Delete</button>
+                            </form>
+                            <form action="{{ url_for('move_file', file_id=file.id) }}" method="POST" style="display: inline;">
+                                <select name="album_id">
+                                    <option value="">No Album</option>
+                                    {% for album in albums %}
+                                        <option value="{{ album.id }}" {% if file.album_id == album.id %}selected{% endif %}>{{ album.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn">Move</button>
                             </form>
                         </td>
                     </tr>

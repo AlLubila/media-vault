@@ -3,6 +3,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from sqlalchemy.orm import DeclarativeBase
+from flask_migrate import Migrate
 
 class Base(DeclarativeBase):
     pass
@@ -19,6 +20,7 @@ app.config["SECRET_KEY"] = os.urandom(24)
 app.config["UPLOAD_FOLDER"] = "/tmp/uploads"
 
 db.init_app(app)
+migrate = Migrate(app, db)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
