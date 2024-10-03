@@ -5,6 +5,12 @@
 {% block content %}
     <h1>Welcome to Media Storage</h1>
     <p>Store and manage your media files securely.</p>
+    
+    <div class="auth-info">
+        <h2>Authentication Required</h2>
+        <p>To access and manage your personal media files, you need to register for an account or log in if you already have one. This ensures that your files remain private and secure.</p>
+    </div>
+    
     {% if not current_user.is_authenticated %}
         <p>
             <a href="{{ url_for('login') }}" class="btn">Login</a>
