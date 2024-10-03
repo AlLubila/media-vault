@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to Media Storage{% endblock %}
+
+{% block content %}
+    <h1>Welcome to Media Storage</h1>
+    <p>Store and manage your media files securely.</p>
+    {% if not current_user.is_authenticated %}
+        <p>
+            <a href="{{ url_for('login') }}" class="btn">Login</a>
+            <a href="{{ url_for('register') }}" class="btn">Register</a>
+        </p>
+    {% else %}
+        <p>
+            <a href="{{ url_for('dashboard') }}" class="btn">Go to Dashboard</a>
+        </p>
+    {% endif %}
+{% endblock %}
