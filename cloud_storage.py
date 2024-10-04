@@ -13,8 +13,12 @@ if credentials_json:
     except json.JSONDecodeError:
         print("Error: Invalid JSON in GOOGLE_APPLICATION_CREDENTIALS_JSON")
         client = None
+    except Exception as e:
+        print(f"Error initializing Google Cloud Storage client: {str(e)}")
+        client = None
 else:
-    client = storage.Client()
+    print("Error: GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable not found")
+    client = None
 
 BUCKET_NAME = os.environ.get('GCS_BUCKET_NAME', 'your-bucket-name')
 bucket = client.bucket(BUCKET_NAME) if client else None

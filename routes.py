@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 from app import app, db, login_manager
 from models import User, MediaFile, Album
 from utils import allowed_file, generate_unique_filename
-from cloud_storage import upload_file, download_file, delete_file, get_storage_usage
+from cloud_storage import upload_file as cloud_upload_file, download_file, delete_file, get_storage_usage
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -22,20 +22,20 @@ def register():
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
-
+        
         user = User.query.filter_by(username=username).first()
         if user:
             flash('Username already exists')
             return redirect(url_for('register'))
-
+        
         new_user = User(username=username, email=email)
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
-
+        
         flash('Registration successful. Please login.')
         return redirect(url_for('login'))
-
+    
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -44,13 +44,13 @@ def login():
         username = request.form['username']
         password = request.form['password']
         user = User.query.filter_by(username=username).first()
-
+        
         if user and user.check_password(password):
             login_user(user)
             return redirect(url_for('dashboard'))
         else:
             flash('Invalid username or password')
-
+    
     return render_template('login.html')
 
 @app.route('/logout')
@@ -67,32 +67,27 @@ def dashboard():
     storage_usage = get_storage_usage()
     return render_template('dashboard.html', files=user_files, albums=user_albums, storage_usage=storage_usage)
 
-# Renamed function to avoid conflict with cloud_storage.upload_file
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
-def handle_file_upload():  # Function name changed
-    if request.method == 'GET':
-        return render_template('upload.html')
-    elif request.method == 'POST':
+def upload_file():
+    if request.method == 'POST':
         if 'file' not in request.files:
             flash('No file part')
-            return redirect(url_for('dashboard'))
-
+            return redirect(request.url)
         file = request.files['file']
         if file.filename == '':
             flash('No selected file')
-            return redirect(url_for('dashboard'))
-
+            return redirect(request.url)
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             unique_filename = generate_unique_filename(filename)
             temp_path = os.path.join('/tmp', unique_filename)
             file.save(temp_path)
-
+            
             # Upload to Google Cloud Storage
-            public_url = upload_file(temp_path, unique_filename)  # This uses cloud_storage.upload_file
+            public_url = cloud_upload_file(temp_path, unique_filename)
             os.remove(temp_path)  # Remove temporary file
-
+            
             album_id = request.form.get('album_id')
             new_file = MediaFile(
                 filename=unique_filename,
@@ -106,21 +101,22 @@ def handle_file_upload():  # Function name changed
             )
             db.session.add(new_file)
             db.session.commit()
-
+            
             flash('File successfully uploaded')
+            return redirect(url_for('dashboard'))
         else:
             flash('File type not allowed')
-
-        return redirect(url_for('dashboard'))
+            return redirect(request.url)
+    return render_template('upload.html')
 
 @app.route('/download/<int:file_id>')
 @login_required
-def download_file_view(file_id):  # Changed function name to avoid conflict
+def download_file(file_id):
     file = MediaFile.query.get_or_404(file_id)
     if file.user_id != current_user.id:
         flash('You do not have permission to download this file')
         return redirect(url_for('dashboard'))
-
+    
     temp_path = os.path.join('/tmp', file.filename)
     download_file(file.filename, temp_path)
     return send_file(temp_path, as_attachment=True, download_name=file.original_filename)
@@ -142,13 +138,13 @@ def search():
 
 @app.route('/delete/<int:file_id>', methods=['POST'])
 @login_required
-def delete_file_view(file_id):  # Changed function name to avoid conflict
+def delete_file(file_id):
     file = MediaFile.query.get_or_404(file_id)
     if file.user_id != current_user.id:
         flash('You do not have permission to delete this file')
         return redirect(url_for('dashboard'))
-
-    delete_file(file.filename)  # Calls cloud_storage.delete_file
+    
+    delete_file(file.filename)
     db.session.delete(file)
     db.session.commit()
     flash('File successfully deleted')
@@ -183,7 +179,7 @@ def move_file(file_id):
     if file.user_id != current_user.id:
         flash('You do not have permission to move this file')
         return redirect(url_for('dashboard'))
-
+    
     album_id = request.form.get('album_id')
     file.album_id = album_id if album_id else None
     db.session.commit()
@@ -197,11 +193,11 @@ def delete_album(album_id):
     if album.user_id != current_user.id:
         flash('You do not have permission to delete this album')
         return redirect(url_for('dashboard'))
-
+    
     # Move all files in the album to no album
     for file in album.media_files:
         file.album_id = None
-
+    
     db.session.delete(album)
     db.session.commit()
     flash('Album deleted successfully')
