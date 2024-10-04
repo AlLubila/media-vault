@@ -67,47 +67,50 @@ def dashboard():
     storage_usage = get_storage_usage()
     return render_template('dashboard.html', files=user_files, albums=user_albums, storage_usage=storage_usage)
 
-@app.route('/upload', methods=['POST'])
+@app.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload_file():
-    if 'file' not in request.files:
-        flash('No file part')
+    if request.method == 'GET':
+        return render_template('upload.html')
+    elif request.method == 'POST':
+        if 'file' not in request.files:
+            flash('No file part')
+            return redirect(url_for('dashboard'))
+        
+        file = request.files['file']
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(url_for('dashboard'))
+        
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            unique_filename = generate_unique_filename(filename)
+            temp_path = os.path.join('/tmp', unique_filename)
+            file.save(temp_path)
+            
+            # Upload to Google Cloud Storage
+            public_url = upload_file(temp_path, unique_filename)
+            os.remove(temp_path)  # Remove temporary file
+            
+            album_id = request.form.get('album_id')
+            new_file = MediaFile(
+                filename=unique_filename,
+                original_filename=filename,
+                file_type=filename.rsplit('.', 1)[1].lower(),
+                tags=request.form.get('tags', ''),
+                upload_date=datetime.utcnow(),
+                user_id=current_user.id,
+                album_id=album_id if album_id else None,
+                public_url=public_url
+            )
+            db.session.add(new_file)
+            db.session.commit()
+            
+            flash('File successfully uploaded')
+        else:
+            flash('File type not allowed')
+        
         return redirect(url_for('dashboard'))
-    
-    file = request.files['file']
-    if file.filename == '':
-        flash('No selected file')
-        return redirect(url_for('dashboard'))
-    
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        unique_filename = generate_unique_filename(filename)
-        temp_path = os.path.join('/tmp', unique_filename)
-        file.save(temp_path)
-        
-        # Upload to Google Cloud Storage
-        public_url = upload_file(temp_path, unique_filename)
-        os.remove(temp_path)  # Remove temporary file
-        
-        album_id = request.form.get('album_id')
-        new_file = MediaFile(
-            filename=unique_filename,
-            original_filename=filename,
-            file_type=filename.rsplit('.', 1)[1].lower(),
-            tags=request.form.get('tags', ''),
-            upload_date=datetime.utcnow(),
-            user_id=current_user.id,
-            album_id=album_id if album_id else None,
-            public_url=public_url
-        )
-        db.session.add(new_file)
-        db.session.commit()
-        
-        flash('File successfully uploaded')
-    else:
-        flash('File type not allowed')
-    
-    return redirect(url_for('dashboard'))
 
 @app.route('/download/<int:file_id>')
 @login_required
