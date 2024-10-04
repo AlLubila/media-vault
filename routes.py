@@ -133,7 +133,8 @@ def search():
         (Album.user_id == current_user.id) &
         (Album.name.ilike(f'%{query}%') | Album.description.ilike(f'%{query}%'))
     ).all()
-    return render_template('dashboard.html', files=files, albums=albums, search_query=query)
+    storage_usage = get_storage_usage()
+    return render_template('dashboard.html', files=files, albums=albums, search_query=query, storage_usage=storage_usage)
 
 @app.route('/delete/<int:file_id>', methods=['POST'])
 @login_required
