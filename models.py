@@ -39,5 +39,8 @@ class MediaFile(db.Model):
     album_id = db.Column(db.Integer, db.ForeignKey('album.id'))
     public_url = db.Column(db.String(512))  # New field for storing the public URL
 
+    def __init__(self, **kwargs):
+        super(MediaFile, self).__init__(**kwargs)
+
     def __repr__(self):
         return f'<MediaFile {self.filename}>'
