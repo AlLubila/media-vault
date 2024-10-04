@@ -1,0 +1,28 @@
+[2024-10-04 00:59:15,883] ERROR in app: Exception on /upload [POST]
+Traceback (most recent call last):
+  File "/home/runner/MediaVault/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/MediaVault/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/MediaVault/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/MediaVault/.pythonlibs/lib/python3.11/site-packages/flask/app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/MediaVault/.pythonlibs/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/MediaVault/routes.py", line 92, in upload_file
+    public_url = upload_file(temp_path, unique_filename)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/MediaVault/.pythonlibs/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: upload_file() takes 0 positional arguments but 2 were given
+172.31.196.35 - - [04/Oct/2024 00:59:15] "POST /upload HTTP/1.1" 500 -
+172.31.196.35 - - [04/Oct/2024 00:59:21] "GET /upload HTTP/1.1" 200 -
+172.31.196.35 - - [04/Oct/2024 00:59:21] "GET /static/css/styles.css HTTP/1.1" 304 -
+172.31.196.35 - - [04/Oct/2024 00:59:21] "GET /static/js/main.js HTTP/1.1" 304 -
