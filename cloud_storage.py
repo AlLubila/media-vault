@@ -20,7 +20,7 @@ BUCKET_NAME = os.environ.get('GCS_BUCKET_NAME', 'your-bucket-name')
 bucket = client.bucket(BUCKET_NAME) if client else None
 
 def upload_file(file_path, destination_blob_name):
-    """Uploads a file to the bucket."""
+    '''Uploads a file to the bucket.'''
     if not bucket:
         raise Exception("Google Cloud Storage client not initialized")
     blob = bucket.blob(destination_blob_name)
