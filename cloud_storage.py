@@ -2,6 +2,7 @@ from google.cloud import storage
 from google.oauth2 import service_account
 import os
 import json
+import datetime
 
 # Initialize the Google Cloud Storage client
 credentials_json = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS_JSON')
@@ -10,8 +11,8 @@ if credentials_json:
         credentials_dict = json.loads(credentials_json)
         credentials = service_account.Credentials.from_service_account_info(credentials_dict)
         client = storage.Client(credentials=credentials)
-    except json.JSONDecodeError:
-        print("Error: Invalid JSON in GOOGLE_APPLICATION_CREDENTIALS_JSON")
+    except json.JSONDecodeError as e:
+        print(f"Error: Invalid JSON in GOOGLE_APPLICATION_CREDENTIALS_JSON: {str(e)}")
         client = None
     except Exception as e:
         print(f"Error initializing Google Cloud Storage client: {str(e)}")
@@ -24,12 +25,19 @@ BUCKET_NAME = os.environ.get('GCS_BUCKET_NAME', 'your-bucket-name')
 bucket = client.bucket(BUCKET_NAME) if client else None
 
 def upload_file(file_path, destination_blob_name):
-    '''Uploads a file to the bucket.'''
+    '''Uploads a file to the bucket and returns a signed URL.'''
     if not bucket:
         raise Exception("Google Cloud Storage client not initialized")
     blob = bucket.blob(destination_blob_name)
     blob.upload_from_filename(file_path)
-    return blob.public_url
+    
+    # Generate a signed URL that expires in 1 hour
+    url = blob.generate_signed_url(
+        version="v4",
+        expiration=datetime.timedelta(hours=1),
+        method="GET"
+    )
+    return url
 
 def download_file(source_blob_name, destination_file_name):
     """Downloads a blob from the bucket."""
