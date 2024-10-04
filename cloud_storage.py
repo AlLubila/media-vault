@@ -6,6 +6,8 @@ import datetime
 
 # Initialize the Google Cloud Storage client
 credentials_json = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS_JSON')
+client = None
+
 if credentials_json:
     try:
         credentials_dict = json.loads(credentials_json)
@@ -13,13 +15,12 @@ if credentials_json:
         client = storage.Client(credentials=credentials)
     except json.JSONDecodeError as e:
         print(f"Error: Invalid JSON in GOOGLE_APPLICATION_CREDENTIALS_JSON: {str(e)}")
-        client = None
+    except ValueError as e:
+        print(f"Error: Invalid credential format in GOOGLE_APPLICATION_CREDENTIALS_JSON: {str(e)}")
     except Exception as e:
         print(f"Error initializing Google Cloud Storage client: {str(e)}")
-        client = None
 else:
     print("Error: GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable not found")
-    client = None
 
 BUCKET_NAME = os.environ.get('GCS_BUCKET_NAME', 'your-bucket-name')
 bucket = client.bucket(BUCKET_NAME) if client else None

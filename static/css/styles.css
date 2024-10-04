@@ -209,35 +209,74 @@ tr:nth-child(even) {
         margin-bottom: 10px;
     }
     
-    table, thead, tbody, th, td, tr {
-        display: block;
+    table {
+        border: 0;
     }
-    
-    thead tr {
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
+
+    table caption {
+        font-size: 1.3em;
     }
-    
-    tr {
-        border: 1px solid #ccc;
-        margin-bottom: 10px;
-    }
-    
-    td {
+
+    table thead {
         border: none;
-        position: relative;
-        padding-left: 50%;
-    }
-    
-    td:before {
+        clip: rect(0 0 0 0);
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        padding: 0;
         position: absolute;
-        top: 6px;
-        left: 6px;
-        width: 45%;
-        padding-right: 10px;
-        white-space: nowrap;
+        width: 1px;
+    }
+
+    table tr {
+        border-bottom: 3px solid #ddd;
+        display: block;
+        margin-bottom: .625em;
+    }
+
+    table td {
+        border-bottom: 1px solid #ddd;
+        display: block;
+        font-size: .8em;
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+    }
+
+    table td::before {
         content: attr(data-label);
+        float: left;
         font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    table td:last-child {
+        border-bottom: 0;
+    }
+
+    td[data-label="Actions"] {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        padding-left: 0;
+    }
+
+    td[data-label="Actions"] > * {
+        margin: 2px;
+    }
+
+    td[data-label="Actions"]::before {
+        content: none;
+    }
+
+    td[data-label="Actions"] .btn,
+    td[data-label="Actions"] form,
+    td[data-label="Actions"] .select-wrapper {
+        width: calc(50% - 4px);
+        box-sizing: border-box;
+    }
+
+    td[data-label="Actions"] .select-wrapper select {
+        width: 100%;
     }
 }

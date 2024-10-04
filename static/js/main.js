@@ -3,8 +3,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const fileNameDisplay = document.getElementById('file-name');
     const uploadForm = document.getElementById('upload-form');
     const searchForm = document.getElementById('search-form');
-    const searchInput = document.getElementById('search-input');
-    let searchTimeout;
 
     if (fileInput && fileNameDisplay) {
         fileInput.addEventListener('change', function(e) {
@@ -26,16 +24,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    if (searchInput && searchForm) {
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                if (this.value.trim() === '') {
-                    window.location.href = '/dashboard';
-                } else {
-                    searchForm.submit();
-                }
-            }, 300);
+    if (searchForm) {
+        searchForm.addEventListener('submit', function(e) {
+            const searchInput = document.getElementById('search-input');
+            if (searchInput.value.trim() === '') {
+                e.preventDefault();
+                alert('Please enter a search query.');
+            }
         });
     }
 
